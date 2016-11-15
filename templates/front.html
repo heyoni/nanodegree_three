@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block welcome %}
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-4">
+        </div>
+        <div class="col-8">
+            {% for p in posts %}
+                {{ p.render() | safe }}
+                <br><br>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

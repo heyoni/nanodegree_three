@@ -1,0 +1,157 @@
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    width: 800px;
+    margin: 0 auto;
+    padding: 10px;
+    color: #333;
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-left: 20px;
+}
+
+.row {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.col-1 {
+    width: 8.33%
+}
+
+.col-2 {
+    width: 16.67%
+}
+
+.col-3 {
+    width: 25%
+}
+
+.col-4 {
+    width: 33.33%
+}
+
+.col-5 {
+    width: 41.66%
+}
+
+.col-6 {
+    width: 50%
+}
+
+.col-7 {
+    width: 58.33%
+}
+
+.col-8 {
+    width: 66.66%
+}
+
+.col-9 {
+    width: 75%
+}
+
+.col-10 {
+    width: 83.33%
+}
+
+.col-11 {
+    width: 91.67%
+}
+
+.col-12 {
+    width: 100%
+}
+
+.error {
+    color: red;
+    padding: 0.5em;
+}
+
+.left-nav {
+    background: rgba(180, 185, 203, 0.33);
+    width: calc(80% - 1em);
+    padding: 1em 0;
+    padding-left: 0.5em;
+    margin: 1em;
+}
+
+a:visited, a:link {
+    color: #222;
+}
+
+.welcome {
+    margin: auto 30px;
+    background: #e2e2a6;
+    margin-bottom: 1.5em;
+}
+
+.header {
+    display: flex;
+    position: relative;
+    color: #222;
+    margin: auto 30px;
+    text-decoration: none;
+    text-align: center;
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+    width: 80%;
+    padding-top: 1em;
+}
+.post_header {
+    text-decoration: none;
+}
+
+label + label {
+    margin-top: 20px;
+}
+
+input[type=text], input[type=password] {
+    width: 500px;
+    font-size: 20px;
+    padding: 2px;
+    font-family: monospace;
+}
+
+textarea {
+    width: 500px;
+    height: 400px;
+    font-size: 17px;
+    font-family: monospace;
+}
+
+input[type=submit] {
+    font-size: 24px;
+}
+
+.post + .post {
+    margin-top: 15px;
+}
+
+.post-heading {
+    position: relative;
+    border-bottom: 3px solid #666;
+}
+
+.post-title {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.post-date {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    color: #999;
+
+}
+
+.post-content {
+    margin-top: 5px;
+}
+

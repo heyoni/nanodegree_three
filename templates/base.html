@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link type="text/css" rel="stylesheet" href="/static/main.css"/>
+    <title>A blog for no one</title>
+</head>
+
+<body>
+{% block welcome %}
+{% endblock %}
+
+<div class="row">
+    <div class="col-4">
+        <table class="left-nav">
+            <tr>
+                <td>
+                    <a href="/blog/newpost">create new post</a>
+            </tr>
+            </td>
+            <tr>
+                <td>
+                    {% if user %}
+                        <a href="/blog/logout">logout</a>
+                    {% else %}
+                        <a href="/blog/login">log in</a>
+                    {% endif %}
+                </tr>
+            </td>
+            <tr>
+                <td>
+                    <a href="/blog">all posts</a>
+            </tr>
+            </td>
+            <tr>
+                <td>
+                    <a href="/blog/welcome">my homepage</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="col-8">
+        <div class="header">
+            This is a blog.
+        </div>
+    </div>
+
+</div>
+<div id="content">
+    {% block content %}
+    {% endblock %}
+</div>
+</body>
+
+</html>
+
