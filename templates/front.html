@@ -8,7 +8,17 @@
         <div class="col-8">
             {% for p in posts %}
                 {{ p.render() | safe }}
-                <br><br>
+                <div class="comments">
+                    {% for c in p.comments_set %}
+                        {{ c.render() | safe }}
+                    {% endfor %}
+                </div>
+                <form action="/blog/add_comment" method="post">
+                    <input type="text" name="comment" value={{ comment }}>
+                    <input type="hidden" name="parent_key" value={{ p.key().id() }}>
+                    <input type="submit">
+                </form>
+
             {% endfor %}
         </div>
     </div>

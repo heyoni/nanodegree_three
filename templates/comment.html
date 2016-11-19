@@ -1,0 +1,6 @@
+<div class="comment_author">
+    {{ c.user.username }} wrote on {{ c.created.date() }} at {{ c.created.time().strftime("%H:%M%p") }}:
+</div>
+<div class="comment">
+    {{ c.comment }}
+</div>

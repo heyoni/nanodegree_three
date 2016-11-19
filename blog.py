@@ -40,12 +40,67 @@ class Post(db.Model):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p=self)
 
+        # def fetch_comments(self):
+        #     Comments.all().filter_by('post_id = ', self.)
+
 
 class accounts(db.Model):
     username = db.StringProperty(required=True)
     # contains hash|salt
     password = db.StringProperty(required=True)
     email = db.StringProperty(required=False)
+
+    @classmethod
+    def createaccount(cls, user, pw, email=''):
+        # checking to see if the account already exists. else we create it
+        q = accounts.all().filter('username =', user)
+        if (q.get() and q.get().username != user) or not q.get():
+            h_salt = make_pw_hash(user, pw)
+            newaccount = accounts(username=user, password=h_salt, email=email)
+            newaccount.put()
+            # id = newaccount.key().id()
+            return newaccount
+
+
+class Comments(db.Model):
+    post_id = db.ReferenceProperty(Post, required=True)
+    user = db.ReferenceProperty(accounts, required=True)
+    comment = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+
+    def render(self):
+        self._render_text = self.comment.replace('\n', '<br>')
+        return render_str("comment.html", c=self)
+
+    @classmethod
+    def fetch_posts(cls, posts):
+        for post in posts:
+            comment = Comments.all().filter("user =", post.user_id)
+            if comment.get():
+                print(comment.comment)
+
+    @classmethod
+    def add_comment(cls, postkey, user, comment):
+        comment = Comments(post_id=postkey, user=user, comment=comment)
+        comment.put()
+
+
+class Upvote(db.Model):
+    post_id = db.ReferenceProperty(Post, required=True)
+    user = db.ReferenceProperty(accounts, required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+
+    @classmethod
+    def upvote(cls, post_id, account_id):
+        post = Post.get_by_id(int(post_id), parent=blog_key())
+        account = accounts.get_by_id(int(account_id))
+        upvote = Upvote.all().filter("user =", account.key()).filter("post_id =", post.key()).get()
+        if not upvote:
+            if post.user_id != account.key().id():
+                upvote = Upvote(post_id=post.key(), user=account.key())
+                upvote.put()
+        else:
+            upvote.delete()
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -91,14 +146,15 @@ class BlogFront(BaseHandler):
 
 
 class PostPage(BaseHandler):
-    def get(self, post_id, delete_post=""):
+    def get(self, post_id, modify=""):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
+        uid = self.read_secure_cookie('user_id')
 
         if not post:
             # self.error(404)
             return self.write('post not found.')
-        if delete_post and post:
+        if modify == "delete" and post and post.user_id == uid:
             user_id = check_secure_val(self.request.cookies.get('user_id'))
             if user_id == post.user_id:
                 post.delete()
@@ -106,6 +162,42 @@ class PostPage(BaseHandler):
         else:
             posts = [post, ]
             self.render("front.html", posts=posts)
+
+
+class EditPost(BaseHandler):
+    def get(self, post_id, modify=""):
+        post = Post.get_by_id(int(post_id), parent=blog_key())
+        self.render("newpost.html", subject=post.subject, content=post.content, post_id=post.key().id())
+
+    def post(self, post_id, modify=""):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        uid = self.read_secure_cookie('user_id')
+        post_id = self.request.get('post_id')
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        if modify == "edit" and post and post.user_id == uid:
+            if post_id and (subject and content) and uid and verify_uid(uid):
+                post = Post.get_by_id(int(post_id), parent=blog_key())
+                post.subject = subject
+                post.content = content
+                post.put()
+                self.redirect('/blog/%s' % post_id)
+            else:
+                self.render("newpost.html", subject=post.subject, content=post.content, post_id=post.key().id())
+        else:
+            error = "subject and content, please!"
+            self.render("newpost.html", subject=subject, content=content, error=error)
+
+
+class SavePost(BaseHandler):
+    def get(self, post_id):
+        uid = self.read_secure_cookie('user_id')
+        if uid:
+            upvote = Upvote.upvote(post_id, uid)
+            self.redirect('/blog/')
+        else:
+            self.render("signup-form.html")
 
 
 class NewPost(BaseHandler):
@@ -116,8 +208,13 @@ class NewPost(BaseHandler):
         subject = self.request.get('subject')
         content = self.request.get('content')
         uid = self.read_secure_cookie('user_id')
+        post_id = self.request.get('post_id')
 
-        if (subject and content) and uid:
+        if (subject and content) and uid and verify_uid(uid):
+            if post_id:
+                post = Post.get_by_id(post_id)
+                post(parent=blog_key(), subject=subject, content=content)
+                post.put()
             p = Post(parent=blog_key(), subject=subject, content=content, user_id=uid)
             p.put()
             self.redirect('/blog/%s' % str(p.key().id()))
@@ -156,7 +253,7 @@ class Signup(BaseHandler):
         if have_error:
             self.render('signup-form.html', **params)
         else:
-            acc = createaccount(username, password, email)
+            acc = accounts.createaccount(username, password, email)
             if not acc:
                 params['error_nametaken'] = "Username already exists."
                 self.render('signup-form.html', **params)
@@ -202,6 +299,19 @@ class Logout(BaseHandler):
         self.set_secure_cookie('user_id', '""; Path=/')
         # self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
         self.redirect('/blog/signup')
+
+
+class EditComments(BaseHandler):
+    def post(self):
+        uid = self.request.cookies.get('user_id')
+        user = verify_uid(uid.split('|')[0])
+        postkey = self.request.get('parent_key')
+        post = Post.get_by_id(int(postkey), parent=blog_key())
+        comment = self.request.get('comment')
+
+        if postkey and comment and check_secure_val(uid) and user:
+            Comments.add_comment(post.key(), user.key(), comment)
+            self.redirect('/blog/%s' % postkey)
 
 
 class Rot13(BaseHandler):
@@ -273,17 +383,6 @@ def valid_pw(name, pw, h):
         return True
 
 
-def createaccount(user, pw, email=''):
-    # checking to see if the account already exists. else we create it
-    q = accounts.all().filter('username =', user)
-    if (q.get() and q.get().username != user) or not q.get():
-        h_salt = make_pw_hash(user, pw)
-        newaccount = accounts(username=user, password=h_salt, email=email)
-        newaccount.put()
-        # id = newaccount.key().id()
-        return newaccount
-
-
 def verify_uid(uid):
     acc = accounts.get_by_id(int(uid))
     if acc:
@@ -300,5 +399,8 @@ app = webapp2.WSGIApplication([('/rot13', Rot13),
                                ('/blog/newpost', NewPost),
                                ('/blog[/]?', BlogFront),
                                ('/blog/userhome', Welcome),
+                               ('/blog/add_comment', EditComments),
+                               ('/blog/([0-9]+)/(edit)', EditPost),
+                               ('/blog/save/([0-9]+)', SavePost),
                                ],
                               debug=True)

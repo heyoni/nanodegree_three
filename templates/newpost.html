@@ -14,9 +14,9 @@
 
                 <label>
                     <div>blog</div>
-                    <textarea name="content">{{ content }}</textarea>
+                    <textarea name="content" value={{ content }}>{{ content }}</textarea>
                 </label>
-
+                <input type="hidden" name="post_id" value={{ post_id }}>
                 <div class="error">{{ error }}</div>
 
                 <input type="submit">

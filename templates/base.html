@@ -17,6 +17,15 @@
                 <td>
                     <a href="/blog/newpost">create new post</a>
             </tr>
+
+            {% if user %}
+            {% else %}
+                <tr>
+                    <td>
+                        <a href="/blog/signup">Register</a>
+                    </td>
+                </tr>
+            {% endif %}
             </td>
             <tr>
                 <td>

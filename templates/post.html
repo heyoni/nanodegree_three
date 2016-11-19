@@ -2,16 +2,26 @@
     <div class="post-heading">
         <div class="post-title">
             <a class="post_header" href="/blog/{{ p.key().id() }}">{{ p.subject }}</a>
+
+            {% if p.upvote_set.get() %}
+            <a href="/blog/save/{{ p.key().id() }}">✕</a>
+            {% else %}
+            <a href="/blog/save/{{ p.key().id() }}">⇧</a>
+            {% endif %}
         </div>
 
         <div class="post-date">
             {{ p.created.strftime("%b %d, %Y") }}
         </div>
+
     </div>
 
     <div class="post-content">
         {{ p._render_text | safe }}
     </div>
     <br>
-    <a href="/blog/{{ p.key().id() }}/delete">delete</a>
+    <div class="post-options">
+        <a href="/blog/{{ p.key().id() }}/delete">delete</a>
+        <a href="/blog/{{ p.key().id() }}/edit">edit</a>
+    </div>
 </div>
