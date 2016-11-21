@@ -15,6 +15,7 @@ jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
 
+# generic render function takes in a filename and returns one back with variables filled out
 def render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
@@ -25,6 +26,7 @@ def render_post(response, post):
     response.out.write(post.content)
 
 
+# generating parent blog for Post
 def blog_key(name='default'):
     return db.Key.from_path('blogs', name)
 
@@ -36,17 +38,15 @@ class Post(db.Model):
     last_modified = db.DateTimeProperty(auto_now=True)
     user_id = db.StringProperty(required=True)
 
+    # returns post.html with variables filled out
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p=self)
 
-        # def fetch_comments(self):
-        #     Comments.all().filter_by('post_id = ', self.)
-
 
 class accounts(db.Model):
     username = db.StringProperty(required=True)
-    # contains hash|salt
+    # stores hash|salt
     password = db.StringProperty(required=True)
     email = db.StringProperty(required=False)
 
@@ -58,7 +58,6 @@ class accounts(db.Model):
             h_salt = make_pw_hash(user, pw)
             newaccount = accounts(username=user, password=h_salt, email=email)
             newaccount.put()
-            # id = newaccount.key().id()
             return newaccount
 
 
@@ -73,13 +72,6 @@ class Comments(db.Model):
         return render_str("comment.html", c=self)
 
     @classmethod
-    def fetch_posts(cls, posts):
-        for post in posts:
-            comment = Comments.all().filter("user =", post.user_id)
-            if comment.get():
-                print(comment.comment)
-
-    @classmethod
     def add_comment(cls, postkey, user, comment):
         comment = Comments(post_id=postkey, user=user, comment=comment)
         comment.put()
@@ -90,6 +82,7 @@ class Upvote(db.Model):
     user = db.ReferenceProperty(accounts, required=True)
     created = db.DateTimeProperty(auto_now_add=True)
 
+    # upvote post. if already upvoted, remove upvote
     @classmethod
     def upvote(cls, post_id, account_id):
         post = Post.get_by_id(int(post_id), parent=blog_key())
@@ -99,6 +92,8 @@ class Upvote(db.Model):
             if post.user_id != account.key().id():
                 upvote = Upvote(post_id=post.key(), user=account.key())
                 upvote.put()
+            else:
+                return False
         else:
             upvote.delete()
 
@@ -127,6 +122,7 @@ class BaseHandler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
+    # sets user_id cookie in headers if login/pw matches
     def verify_login(self, user, password):
         acc = accounts.all().filter('username', user)
         if acc.get():
@@ -154,6 +150,7 @@ class PostPage(BaseHandler):
         if not post:
             # self.error(404)
             return self.write('post not found.')
+        # check if user has the right to delete
         if modify == "delete" and post and post.user_id == uid:
             user_id = check_secure_val(self.request.cookies.get('user_id'))
             if user_id == post.user_id:
@@ -176,7 +173,9 @@ class EditPost(BaseHandler):
         post_id = self.request.get('post_id')
         subject = self.request.get('subject')
         content = self.request.get('content')
+        # if user is authorized
         if modify == "edit" and post and post.user_id == uid:
+            # if the post exists and the forms/cookies are valid, update post
             if post_id and (subject and content) and uid and verify_uid(uid):
                 post = Post.get_by_id(int(post_id), parent=blog_key())
                 post.subject = subject
@@ -184,18 +183,20 @@ class EditPost(BaseHandler):
                 post.put()
                 self.redirect('/blog/%s' % post_id)
             else:
+                # if any text is missing, send back to post editing page
                 self.render("newpost.html", subject=post.subject, content=post.content, post_id=post.key().id())
         else:
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
 
 
-class SavePost(BaseHandler):
+class UpvotePost(BaseHandler):
     def get(self, post_id):
         uid = self.read_secure_cookie('user_id')
         if uid:
             upvote = Upvote.upvote(post_id, uid)
-            self.redirect('/blog/')
+            if upvote:
+                self.redirect('/blog/')
         else:
             self.render("signup-form.html")
 
@@ -209,8 +210,9 @@ class NewPost(BaseHandler):
         content = self.request.get('content')
         uid = self.read_secure_cookie('user_id')
         post_id = self.request.get('post_id')
-
+        # check that all the forms/uid are valid
         if (subject and content) and uid and verify_uid(uid):
+            # when editing, post_id will exist
             if post_id:
                 post = Post.get_by_id(post_id)
                 post(parent=blog_key(), subject=subject, content=content)
@@ -249,7 +251,7 @@ class Signup(BaseHandler):
         if not valid_email(email):
             params['error_email'] = "That's not a valid email."
             have_error = True
-        # check if errors, or user exists then create account
+        # submit params if error is found
         if have_error:
             self.render('signup-form.html', **params)
         else:
@@ -265,11 +267,13 @@ class Signup(BaseHandler):
 
 class Welcome(BaseHandler):
     def get(self):
+        # if user is logged in, fetch 10 of users' posts
         uid = self.read_secure_cookie('user_id')
         if uid:
             acc = verify_uid(uid)
             if acc:
                 posts = db.GqlQuery("SELECT * FROM Post WHERE user_id='%s' ORDER BY created DESC LIMIT 10" % uid)
+                # display welcome banner if user is just logging in
                 if self.request.get('username'):
                     user = self.request.get('username')
                     self.render('welcome.html', posts=posts, username=user)
@@ -401,6 +405,6 @@ app = webapp2.WSGIApplication([('/rot13', Rot13),
                                ('/blog/userhome', Welcome),
                                ('/blog/add_comment', EditComments),
                                ('/blog/([0-9]+)/(edit)', EditPost),
-                               ('/blog/save/([0-9]+)', SavePost),
+                               ('/blog/save/([0-9]+)', UpvotePost),
                                ],
                               debug=True)
