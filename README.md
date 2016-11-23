@@ -1,5 +1,9 @@
 # nanodegree_three
 
+#Installation
+Install google appengine SDK for python at https://cloud.google.com/appengine/docs/python/download
+Extract contents into folder and run ```dev_appserver.py .```
+That will setup a webserver at localhost:8080, goto /blog to find the blog
 #Overview
 
 Users can write blog posts that are visible to anyone browsing this website. Included is the ability for others to post 
