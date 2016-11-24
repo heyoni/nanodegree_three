@@ -18,10 +18,12 @@ class EditComments(BaseHandler):
                 if orig_comment.user.key().id() == user.key().id():
                     orig_comment.comment = comment
                     orig_comment.put()
-                self.redirect('/blog/%s' % postkey)
+                    self.redirect('/blog/%s' % postkey)
             else:
                 Comments.add_comment(post.key(), user.key(), comment)
                 self.redirect('/blog/%s' % postkey)
+        else:
+            self.auth_render('welcome.html')
 
     def get(self, comment_id, action=""):
         self.redirect('/blog')
@@ -32,6 +34,9 @@ class DeleteComment(BaseHandler):
         uid = self.request.cookies.get('user_id')
         user = verify_uid(uid.split('|')[0])
         orig_comment = Comments.get_by_id(int(comment_id))
-        if orig_comment.user.key().id() == user.key().id():
-            orig_comment.delete()
-            self.redirect('/blog')
+        if user:
+            if orig_comment.user.key().id() == user.key().id():
+                orig_comment.delete()
+                self.redirect('/blog')
+        else:
+            self.auth_render('welcome.html')
