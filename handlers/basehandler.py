@@ -1,6 +1,10 @@
 import webapp2
 
-from blog import verify_uid, render_str, make_secure_val, check_secure_val, valid_pw
+from blog import verify_uid
+from blog import render_str
+from blog import make_secure_val
+from blog import check_secure_val
+from blog import valid_pw
 from models.users import Accounts
 
 
@@ -11,6 +15,14 @@ class BaseHandler(webapp2.RequestHandler):
         self.user = uid and verify_uid(uid)
 
     def render(self, template, **kw):
+        kw['user'] = self.user
+        self.response.out.write(render_str(template, **kw))
+
+    def auth_render(self, template, **kw):
+        uid = self.read_secure_cookie('user_id')
+        if not verify_uid(uid):
+            self.logout()
+            template = "signup-form.html"
         kw['user'] = self.user
         self.response.out.write(render_str(template, **kw))
 
@@ -32,8 +44,7 @@ class BaseHandler(webapp2.RequestHandler):
     def verify_login(self, user, password):
         acc = Accounts.all().filter('username', user)
         if acc.get():
-            pwvalid = valid_pw(user, password, acc.get().password)
-            if pwvalid:
+            if valid_pw(user, password, acc.get().password):
                 self.set_secure_cookie('user_id', str(acc.get().key().id()))
                 return True
 

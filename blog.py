@@ -46,7 +46,7 @@ def make_secure_val(val):
 def check_secure_val(secure_val):
     val = secure_val.split('|')[0]
     if secure_val == make_secure_val(val):
-        return val
+        return int(val)
 
 
 # input validations
@@ -86,7 +86,13 @@ def valid_pw(name, pw, h):
 
 
 def verify_uid(uid):
-    acc = Accounts.get_by_id(int(uid))
+    """
+    this method verifies that the uid actually exists in the database and returns True if so
+    """
+    try:
+        acc = Accounts.get_by_id(int(uid))
+    except:
+        return False
     if acc:
         return acc
 
@@ -95,6 +101,7 @@ from models.post import Post
 from models.users import Accounts
 from handlers.basehandler import BaseHandler
 from handlers.editcomments import EditComments
+from handlers.editcomments import DeleteComment
 from handlers.editpost import EditPost
 from handlers.login import Login
 from handlers.logout import Logout
@@ -102,6 +109,7 @@ from handlers.newpost import NewPost
 from handlers.postpage import PostPage
 from handlers.signup import Signup
 from handlers.upvotepost import UpvotePost
+from handlers.redirecthome import RedirectHome
 
 
 class BlogFront(BaseHandler):
@@ -132,21 +140,7 @@ class Welcome(BaseHandler):
             self.redirect('/blog/signup')
 
 
-class Rot13(BaseHandler):
-    def get(self):
-        self.render('rot13-form.html')
-
-    def post(self):
-        rot13 = ''
-        text = self.request.get('text')
-        if text:
-            rot13 = text.encode('rot13')
-
-        self.render('rot13-form.html', text=rot13)
-
-
-app = webapp2.WSGIApplication([('/rot13', Rot13),
-                               ('/blog/signup', Signup),
+app = webapp2.WSGIApplication([('/blog/signup', Signup),
                                ('/blog/welcome', Welcome),
                                ('/blog/login', Login),
                                ('/blog/logout', Logout),
@@ -158,5 +152,8 @@ app = webapp2.WSGIApplication([('/rot13', Rot13),
                                ('/blog/add_comment', EditComments),
                                ('/blog/([0-9]+)/(edit)', EditPost),
                                ('/blog/save/([0-9]+)', UpvotePost),
+                               ('/blog/comment/([0-9]+)/(edit)', EditComments),
+                               ('/blog/comment/([0-9]+)/(delete)', DeleteComment),
+                               ('/.*?', RedirectHome),
                                ],
                               debug=True)

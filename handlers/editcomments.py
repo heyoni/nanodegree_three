@@ -5,7 +5,7 @@ from models.post import Post
 
 
 class EditComments(BaseHandler):
-    def post(self):
+    def post(self, comment_id, action=""):
         uid = self.request.cookies.get('user_id')
         user = verify_uid(uid.split('|')[0])
         postkey = self.request.get('parent_key')
@@ -13,5 +13,25 @@ class EditComments(BaseHandler):
         comment = self.request.get('comment')
 
         if postkey and comment and check_secure_val(uid) and user:
-            Comments.add_comment(post.key(), user.key(), comment)
-            self.redirect('/blog/%s' % postkey)
+            if action == "edit":
+                orig_comment = Comments.get_by_id(int(comment_id))
+                if orig_comment.user.key().id() == user.key().id():
+                    orig_comment.comment = comment
+                    orig_comment.put()
+                self.redirect('/blog/%s' % postkey)
+            else:
+                Comments.add_comment(post.key(), user.key(), comment)
+                self.redirect('/blog/%s' % postkey)
+
+    def get(self, comment_id, action=""):
+        self.redirect('/blog')
+
+
+class DeleteComment(BaseHandler):
+    def get(self, comment_id, method=""):
+        uid = self.request.cookies.get('user_id')
+        user = verify_uid(uid.split('|')[0])
+        orig_comment = Comments.get_by_id(int(comment_id))
+        if orig_comment.user.key().id() == user.key().id():
+            orig_comment.delete()
+            self.redirect('/blog')

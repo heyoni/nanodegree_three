@@ -5,22 +5,23 @@ from models.post import Post
 
 class NewPost(BaseHandler):
     def get(self):
-        self.render("newpost.html")
+        return self.auth_render("newpost.html")
 
     def post(self):
         subject = self.request.get('subject')
         content = self.request.get('content')
         uid = self.read_secure_cookie('user_id')
         post_id = self.request.get('post_id')
+        user = verify_uid(uid)
         # check that all the forms/uid are valid
-        if (subject and content) and uid and verify_uid(uid):
+        if (subject and content) and uid and verify_uid(uid) and user:
             # when editing, post_id will exist
             if post_id:
                 post = Post.get_by_id(post_id)
                 post(parent=blog_key(), subject=subject, content=content)
                 post.put()
             p = Post(parent=blog_key(), subject=subject, content=content,
-                     user_id=uid)
+                     user_id=user.key())
             p.put()
             self.redirect('/blog/%s' % str(p.key().id()))
         else:

@@ -1,5 +1,6 @@
 from google.appengine.ext import db
 import sys
+
 print(sys.path)
 
 from blog import render_str

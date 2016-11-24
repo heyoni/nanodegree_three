@@ -1,6 +1,24 @@
 <div class="comment_author">
     {{ c.user.username }} wrote on {{ c.created.date() }} at {{ c.created.time().strftime("%H:%M%p") }}:
 </div>
-<div class="comment">
+<div class="comment" id={{ c.key().id() }}>
     {{ c.comment }}
 </div>
+<div class="post-options">
+    <a href="/blog/comment/{{ c.key().id() }}/delete">delete</a>
+    <a class="edit-usertext" href="javascript:void(0)"
+       onclick="return transform(document.getElementById('{{ c.key().id() }}'))">edit</a>
+</div>
+<script type="application/javascript">
+    function transform(obj) {
+        obj.innerHTML = "<form><input name='comment' type='text' value='" + obj.innerHTML + "' />" +
+            "<button formmethod='POST' formaction='/blog/comment/{{ c.key().id() }}/edit'>submit</button>" +
+            "<button onclick='return untransform(document.getElementById({{ c.key().id() }}))'>cancel</button>" +
+            "<input type='hidden' name='parent_key' value='{{ c.post_id.key().id() }}'></form>";
+    }
+    function untransform(obj) {
+        {#        obj.innerHTML = "<div class='comment' id={{ c.key().id() }}>{{ c.comment }}</div>"#}
+        obj.innerHTML = "{{ c.comment }}"
+    }
+</script>
+<input type="hidden">

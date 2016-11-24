@@ -9,8 +9,8 @@
             <a href="/blog/save/{{ p.key().id() }}">⇧</a>
             {% endif %}
         </div>
-
         <div class="post-date">
+            {{ p.user_id.username }}
             {{ p.created.strftime("%b %d, %Y") }}
         </div>
 

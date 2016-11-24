@@ -12,13 +12,17 @@ class PostPage(BaseHandler):
 
         if not post:
             # self.error(404)
-            return self.write('post not found.')
+            return self.render("404.html")
+            # return self.write('post not found.')
         # check if user has the right to delete
-        if modify == "delete" and post and post.user_id == uid:
-            user_id = check_secure_val(self.request.cookies.get('user_id'))
-            if user_id == post.user_id:
-                post.delete()
-            self.render("welcome.html")
+        if modify == "delete" and post:
+            if int(post.user_id.key().id()) == uid:
+                user_id = check_secure_val(self.request.cookies.get('user_id'))
+                if user_id == int(post.user_id.key().id()):
+                    post.delete()
+                    self.render("welcome.html")
+            else:
+                self.auth_render("welcome.html")
         else:
             posts = [post, ]
             self.render("front.html", posts=posts)

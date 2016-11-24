@@ -18,10 +18,8 @@ class Upvote(db.Model):
         upvote = Upvote.all().filter("user =", account.key()).filter(
             "post_id =", post.key()).get()
         if not upvote:
-            if post.user_id != account.key().id():
+            if int(post.user_id.key().id()) != int(account.key().id()):
                 upvote = Upvote(post_id=post.key(), user=account.key())
                 upvote.put()
-            else:
-                return False
         else:
             upvote.delete()

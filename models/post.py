@@ -1,5 +1,5 @@
 from google.appengine.ext import db
-
+from users import Accounts
 from blog import render_str
 
 
@@ -8,7 +8,7 @@ class Post(db.Model):
     content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
-    user_id = db.StringProperty(required=True)
+    user_id = db.ReferenceProperty(Accounts, required=True)
 
     # returns post.html with variables filled out
     def render(self):
