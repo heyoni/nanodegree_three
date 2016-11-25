@@ -38,5 +38,7 @@ class DeleteComment(BaseHandler):
             if orig_comment.user.key().id() == user.key().id():
                 orig_comment.delete()
                 self.redirect('/blog')
+            else:
+                self.auth_render('welcome.html')
         else:
             self.auth_render('welcome.html')

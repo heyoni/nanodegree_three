@@ -9,4 +9,4 @@ class UpvotePost(BaseHandler):
             Upvote.upvote(post_id, uid)
             self.redirect('/blog/')
         else:
-            self.render("signup-form.html")
+            self.render("login.html")

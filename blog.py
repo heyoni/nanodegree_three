@@ -110,6 +110,7 @@ from handlers.postpage import PostPage
 from handlers.signup import Signup
 from handlers.upvotepost import UpvotePost
 from handlers.redirecthome import RedirectHome
+from handlers.newcomment import NewComment
 
 
 class BlogFront(BaseHandler):
@@ -149,7 +150,7 @@ app = webapp2.WSGIApplication([('/blog/signup', Signup),
                                ('/blog/newpost', NewPost),
                                ('/blog[/]?', BlogFront),
                                ('/blog/userhome', Welcome),
-                               ('/blog/add_comment', EditComments),
+                               ('/blog/add_comment', NewComment),
                                ('/blog/([0-9]+)/(edit)', EditPost),
                                ('/blog/save/([0-9]+)', UpvotePost),
                                ('/blog/comment/([0-9]+)/(edit)', EditComments),

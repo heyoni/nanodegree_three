@@ -22,7 +22,7 @@ class BaseHandler(webapp2.RequestHandler):
         uid = self.read_secure_cookie('user_id')
         if not verify_uid(uid):
             self.logout()
-            template = "signup-form.html"
+            template = "login.html"
         kw['user'] = self.user
         self.response.out.write(render_str(template, **kw))
 
